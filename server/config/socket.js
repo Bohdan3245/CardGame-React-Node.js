@@ -1,20 +1,49 @@
 const user = require("../models/user");
 const User = require("../models/user");
 let ioInstance;
-
+let onlineUsers = [];
+//let socketIdName = [];
 module.exports = (io) => {
   ioInstance = io;
 
   //У io.on("connection", ...) — реєструєш всі події юзера через сокет.
   io.on("connection", (socket) => {
+    onlineUsers.push(socket.id);
     console.log("User connected:", socket.id);
+    //console.log(onlineUsers);
 
     socket.on("disconnect", async () => {
+      onlineUsers = onlineUsers.filter((id) => id !== socket.id);
+      //console.log("when disconnect: ", onlineUsers);
+
+      // socketIdName = socketIdName.filter((obj) => obj.socketID !== socket.id);
+      // console.log("видалення після відключення: ", socketIdName);
+
       await User.updateOne({ socketID: socket.id }, { $set: { socketID: "" } });
       console.log("User disconnect:", socket.id);
     });
 
     //вся логіка
+    // socket.on("login", (data) => {
+    //   socketIdName.push(data);
+    //   console.log("Список залогованих юзерів: ", socketIdName);
+    // });
+
+    // socket.on("friendListOnline", (data) => {
+    //   let friendListOnlineStatus = data.map((friend) => {
+    //     return {
+    //       ...friend,
+    //       onlineStatus: socketIdName.some(
+    //         (user) => user.socketID === friend.socketID
+    //       ),
+    //     };
+    //   });
+    //   console.log(
+    //     "список друзів для обробки одної фігні",
+    //     friendListOnlineStatus
+    //   );
+    // });
+
     socket.on("checkFriendRequest", async ({ username }) => {
       try {
         const user = await User.findOne({ username });
@@ -72,6 +101,9 @@ module.exports = (io) => {
   });
 };
 
+const getOnlineUsers = () => {
+  return onlineUsers;
+};
 // Функція для використання io в інших модулях
 
 module.exports.getIO = () => {
@@ -80,3 +112,6 @@ module.exports.getIO = () => {
   }
   return ioInstance;
 };
+
+//експортую список socketID які зараз онлайн
+module.exports.getOnlineUsers = getOnlineUsers;

@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const { getOnlineUsers } = require("../config/socket");
 
 async function findFriend(username, accOwner) {
   const existingUser = await User.findOne({ username }); // не забувай ставити {} в методі .findOne()
@@ -138,13 +139,22 @@ async function acceptDeclinRequest(accOwner, friend, answer) {
 }
 
 async function getFriendList(accOwner) {
+  const onlineUsers = getOnlineUsers();
   const result = await User.findOne(accOwner);
-  const friendList = result.friendList; // це масив імен, не об'єкт
-  console.log(
-    `Friend List of "\x1b[36m${result.username}\x1b[0m" :`,
-    friendList
-  );
-  return { status: 200, body: { friendList } };
+  const friendList = await getNameAndSocketID(result.friendList);
+
+  const friendListAndSocket = friendList.map((friend) => {
+    return {
+      ...friend,
+      onlineStatus: onlineUsers.includes(friend.socketID),
+    };
+  });
+  //console.log("Масив об'єктів з іменами та сокетами: ", friendListAndSocket);
+
+  return {
+    status: 200,
+    body: { friendListAndSocket },
+  };
 }
 
 async function removeFriend(friend, accOwner) {
@@ -161,6 +171,9 @@ async function removeFriend(friend, accOwner) {
       $pull: { friendList: accOwner },
     }
   );
+  console.log(
+    `"\x1b[36m${accOwner}\x1b[0m" and "\x1b[36m${friend}\x1b[0m" are no longer friends.`
+  );
   return {
     status: 200,
     body: {
@@ -168,6 +181,21 @@ async function removeFriend(friend, accOwner) {
     },
   };
 }
+
+//приймає масив імен користувача, і повертає масив об'єктів з іменами і їх socket.id
+async function getNameAndSocketID(arr) {
+  let arrOfObj = [];
+  for (let i = 0; i < arr.length; i++) {
+    const nameSocket = await User.findOne({ username: arr[i] });
+    arrOfObj.push({
+      friendName: nameSocket.username,
+      socketID: nameSocket.socketID,
+      onlineStatus: false,
+    });
+  }
+  return arrOfObj;
+}
+
 module.exports = {
   findFriend,
   friendRequest,

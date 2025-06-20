@@ -50,8 +50,15 @@ export const FriendsMenu = ({ myName }) => {
     };
   }, [myName]);
 
+  //
   //Список друзів
   const [friendList, setFriendList] = useState([]);
+  const [onlineStatus, setOnlineStatus] = useState([]);
+
+  // useEffect(() => {
+  //   socket.emit("friendListOnline", friendList);
+  // }, [friendList]);
+
   const getFriendList = async () => {
     try {
       const res = await fetch(
@@ -61,8 +68,9 @@ export const FriendsMenu = ({ myName }) => {
         console.log("шось пішло не так");
       }
       const data = await res.json();
-      setFriendList(data.friendList);
-      console.log(friendList);
+      setFriendList(data.friendListAndSocket);
+
+      console.log("те шо прийшло на сервер", friendList);
     } catch (err) {}
   };
 
@@ -81,10 +89,12 @@ export const FriendsMenu = ({ myName }) => {
           }
         );
         console.log(`${name} and ${myName} go to the server`); // true
-        console.log("asdadasdasdasd", friendList);
+
         const data = await res.json();
         if (res.ok) {
-          const a = friendList.filter((username) => username !== name);
+          const a = friendList.filter(
+            (username) => username.friendName !== name
+          );
           setFriendList(a); //////////////////////////////////////
         }
       } catch (err) {}
@@ -105,8 +115,9 @@ export const FriendsMenu = ({ myName }) => {
                 setHovered(-1);
               }}
             >
-              <p>
-                {index + 1}. {name}
+              <p style={{ color: name.onlineStatus ? "green" : "gray" }}>
+                {index + 1}. {name.friendName}{" "}
+                {name.onlineStatus ? "online" : "offline"}
               </p>
               {hovered === index && (
                 <button
@@ -127,7 +138,9 @@ export const FriendsMenu = ({ myName }) => {
                   <button onClick={() => alert("Перегляд профілю")}>
                     Профіль
                   </button>
-                  <button onClick={() => deletFriend(name)}>Видалити</button>
+                  <button onClick={() => deletFriend(name.friendName)}>
+                    Видалити
+                  </button>
                 </div>
               )}
             </div>

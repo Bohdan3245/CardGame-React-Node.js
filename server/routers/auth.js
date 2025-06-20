@@ -52,6 +52,7 @@ router.post("/login", async (req, res) => {
       { username: username },
       { $set: { socketID: socketId } }
     );
+
     console.log(
       `Користувач "\x1b[36m${username}\x1b[0m" увійшов в акаунт. socket.id: ${socketId}`
     );

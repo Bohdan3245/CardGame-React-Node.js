@@ -100,6 +100,7 @@ export const Registration = ({ onLoginSuccess, setOwnerName }) => {
         if (res.ok) {
           setOwnerName(username); // передається на головну сторінку ім'я зареєстрованого\залогованого користувача
           onLoginSuccess(); // при успішному вході\реєстрації відкриється головна сторінка
+          //socket.emit("login", { name: username, socketID: socket.id });
         } else {
           setResponse(data.error);
         }
