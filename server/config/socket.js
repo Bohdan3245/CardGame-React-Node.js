@@ -1,48 +1,94 @@
-const user = require("../models/user");
 const User = require("../models/user");
 let ioInstance;
-let onlineUsers = [];
-//let socketIdName = [];
+
+//Map() де ключ це ім'я, а socketID значення
+let onlineUserByName = new Map();
+//Map() де ключ це socketID, а ім'я значення
+let onlineUserBySocketID = new Map();
+
+async function sendMyStatusToFriends(io, myName, mySocketID, status) {
+  try {
+    const myData = await User.findOne({ username: myName });
+    const friendList = myData.friendList;
+    let arr = [];
+    if (friendList !== null)
+      for (const name of friendList) {
+        if (onlineUserByName.get(name)) {
+          arr.push({
+            friendName: name,
+            socketID: onlineUserByName.get(name),
+            onlineStatus: status,
+          });
+          io.to(onlineUserByName.get(name)).emit("onlineStatusOfFriend", {
+            friendName: myName,
+            socketID: mySocketID,
+            onlineStatus: status,
+          });
+        }
+      }
+    //відправляє список друзів онлайн на мій акк, коли я авторизуюсь
+    io.to(mySocketID).emit("myOnlineFriendList", arr);
+  } catch (err) {
+    console.error("Помилка при надсиланні статусу друзям:", err.message);
+  }
+}
+
 module.exports = (io) => {
   ioInstance = io;
 
   //У io.on("connection", ...) — реєструєш всі події юзера через сокет.
   io.on("connection", (socket) => {
-    onlineUsers.push(socket.id);
     console.log("User connected:", socket.id);
-    //console.log(onlineUsers);
 
     socket.on("disconnect", async () => {
-      onlineUsers = onlineUsers.filter((id) => id !== socket.id);
-      //console.log("when disconnect: ", onlineUsers);
+      ////////////// deleting Map() (Online Friends List) //////////////
+      const nameKey = onlineUserBySocketID.get(socket.id);
 
-      // socketIdName = socketIdName.filter((obj) => obj.socketID !== socket.id);
-      // console.log("видалення після відключення: ", socketIdName);
+      //надсилання всім друзям мій статус оффлайн коли я вихожу
+      sendMyStatusToFriends(
+        ioInstance,
+        onlineUserBySocketID.get(socket.id),
+        onlineUserByName.get(nameKey),
+        false
+      );
 
+      if (nameKey) {
+        onlineUserByName.delete(nameKey);
+        onlineUserBySocketID.delete(socket.id);
+      }
+
+      // console.log("Мапа після видалення де ключ це ім'я: ", onlineUserByName);
+      // console.log(
+      //   "Мапа після видалення де ключ це socketID: ",
+      //   onlineUserBySocketID
+      // );
+
+      ////////////////////////////////////////////////////////////////////////
+
+      //Видалення socket.id в базі даних (скоріш за все приберу це коли зрозумію чи треба мені цей айді в бд чи ні)
       await User.updateOne({ socketID: socket.id }, { $set: { socketID: "" } });
       console.log("User disconnect:", socket.id);
     });
 
     //вся логіка
-    // socket.on("login", (data) => {
-    //   socketIdName.push(data);
-    //   console.log("Список залогованих юзерів: ", socketIdName);
-    // });
+    ////////////// add Map() (Online Friends List) //////////////
+    socket.on("socketLogin", (data) => {
+      onlineUserByName.set(data.name, data.socketID);
+      onlineUserBySocketID.set(data.socketID, data.name);
 
-    // socket.on("friendListOnline", (data) => {
-    //   let friendListOnlineStatus = data.map((friend) => {
-    //     return {
-    //       ...friend,
-    //       onlineStatus: socketIdName.some(
-    //         (user) => user.socketID === friend.socketID
-    //       ),
-    //     };
-    //   });
-    //   console.log(
-    //     "список друзів для обробки одної фігні",
-    //     friendListOnlineStatus
-    //   );
-    // });
+      // console.log("Мапа де ключ це ім'я: ", onlineUserByName);
+      // console.log("Мапа де ключ це socketID: ", onlineUserBySocketID);
+
+      //відправити всім друзям шо я онлайн
+      sendMyStatusToFriends(
+        ioInstance,
+        onlineUserBySocketID.get(data.socketID),
+        onlineUserByName.get(data.name),
+        true
+      );
+    });
+
+    //////////////////////////////////////////////////////////////
 
     socket.on("checkFriendRequest", async ({ username }) => {
       try {
@@ -101,8 +147,8 @@ module.exports = (io) => {
   });
 };
 
-const getOnlineUsers = () => {
-  return onlineUsers;
+const getSocketIDofOnlineUsersByName = () => {
+  return onlineUserByName;
 };
 // Функція для використання io в інших модулях
 
@@ -114,4 +160,4 @@ module.exports.getIO = () => {
 };
 
 //експортую список socketID які зараз онлайн
-module.exports.getOnlineUsers = getOnlineUsers;
+module.exports.getSocketIDofOnlineUsersByName = getSocketIDofOnlineUsersByName;

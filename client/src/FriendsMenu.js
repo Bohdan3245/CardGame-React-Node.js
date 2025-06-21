@@ -5,59 +5,33 @@ export const FriendsMenu = ({ myName }) => {
   const [frBlock, setFrBlock] = useState("");
   const [frRequetList, setFrRequestList] = useState({ friendRequest: [] });
 
-  //Перевірка чи є запити на дружбу коли користувач логіниться
-  // useEffect(() => {
-  //   checkFriendRequest();
-  // }, []); // порожній масив означає: лише один раз після рендеру
-
-  // const checkFriendRequest = async () => {
-  //   const res = await fetch(
-  //     "http://localhost:3001/api/friends/checkFriendRequest",
-  //     {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ username: myName }),
-  //     }
-  //   );
-
-  //   const data = await res.json(); //список запитів в друзі
-
-  //   if (data && data.friendRequest) {
-  //     setFrRequestList(data);
-  //   } else {
-  //     setFrRequestList({ friendRequest: [] }); // щоб не було undefined
-  //     console.warn("Не знайдено friendRequest у відповіді:", data);
-  //   }
-  //   console.log(data);
-  // };
-
-  useEffect(() => {
-    socket.emit("checkFriendRequest", { username: myName });
-
-    socket.on("friendRequestList", (data) => {
-      setFrRequestList(data || { friendRequest: [] });
-    });
-    socket.on("friendRequestUpdated", (data) => {
-      if (data.username === myName) {
-        setFrRequestList({ friendRequest: data.friendRequest });
-        console.log("шо приходить з сервера: ", data);
-      }
-    });
-
-    return () => {
-      socket.off("friendRequestList");
-      socket.off("friendRequestUpdated");
-    };
-  }, [myName]);
-
-  //
   //Список друзів
   const [friendList, setFriendList] = useState([]);
   const [onlineStatus, setOnlineStatus] = useState([]);
 
-  // useEffect(() => {
-  //   socket.emit("friendListOnline", friendList);
-  // }, [friendList]);
+  //set online status
+  useEffect(() => {
+    socket.on("onlineStatusOfFriend", (data) => {
+      if (data.onlineStatus) {
+        setOnlineStatus((prev) => [
+          ...prev,
+          { friendName: data.friendName, socketID: data.socketID },
+        ]);
+      } else {
+        setOnlineStatus((prev) => {
+          return prev.filter(
+            (username) => username.friendName !== data.friendName
+          );
+        });
+      }
+
+      console.log("Я зайшов в онлайн", onlineStatus);
+    });
+
+    socket.on("myOnlineFriendList", (data) => {
+      setOnlineStatus(data);
+    });
+  }, []);
 
   const getFriendList = async () => {
     try {
@@ -68,13 +42,14 @@ export const FriendsMenu = ({ myName }) => {
         console.log("шось пішло не так");
       }
       const data = await res.json();
-      setFriendList(data.friendListAndSocket);
 
-      console.log("те шо прийшло на сервер", friendList);
+      setFriendList(data.friendList);
+
+      console.log("те шо прийшло на сервер", data.friendList);
     } catch (err) {}
   };
 
-  function ListFr({ friendList, setFriendList }) {
+  function ListFr({ friendList, setFriendList, onlineStatus }) {
     const [hovered, setHovered] = useState();
     const [openMenuIndex, setOpenMenuIndex] = useState(null);
 
@@ -92,9 +67,7 @@ export const FriendsMenu = ({ myName }) => {
 
         const data = await res.json();
         if (res.ok) {
-          const a = friendList.filter(
-            (username) => username.friendName !== name
-          );
+          const a = friendList.filter((username) => username !== name);
           setFriendList(a); //////////////////////////////////////
         }
       } catch (err) {}
@@ -115,9 +88,19 @@ export const FriendsMenu = ({ myName }) => {
                 setHovered(-1);
               }}
             >
-              <p style={{ color: name.onlineStatus ? "green" : "gray" }}>
-                {index + 1}. {name.friendName}{" "}
-                {name.onlineStatus ? "online" : "offline"}
+              <p
+                style={{
+                  color: onlineStatus.some(
+                    (friend) => friend.friendName === name
+                  )
+                    ? "green"
+                    : "gray",
+                }}
+              >
+                {index + 1}. {name}{" "}
+                {onlineStatus.some((friend) => friend.friendName === name)
+                  ? "online"
+                  : "offline"}
               </p>
               {hovered === index && (
                 <button
@@ -138,9 +121,7 @@ export const FriendsMenu = ({ myName }) => {
                   <button onClick={() => alert("Перегляд профілю")}>
                     Профіль
                   </button>
-                  <button onClick={() => deletFriend(name.friendName)}>
-                    Видалити
-                  </button>
+                  <button onClick={() => deletFriend(name)}>Видалити</button>
                 </div>
               )}
             </div>
@@ -250,6 +231,25 @@ export const FriendsMenu = ({ myName }) => {
   }
 
   //Запити на додавання в друзі
+  useEffect(() => {
+    socket.emit("checkFriendRequest", { username: myName });
+
+    socket.on("friendRequestList", (data) => {
+      setFrRequestList(data || { friendRequest: [] });
+    });
+    socket.on("friendRequestUpdated", (data) => {
+      if (data.username === myName) {
+        setFrRequestList({ friendRequest: data.friendRequest });
+        console.log("шо приходить з сервера: ", data);
+      }
+    });
+
+    return () => {
+      socket.off("friendRequestList");
+      socket.off("friendRequestUpdated");
+    };
+  }, [myName]);
+
   function RequestFr() {
     const acceptDeclineReq = async (frName, answer) => {
       //console.log(`User ${myName} add ${frName} to friend List ${answer}`);
@@ -347,7 +347,6 @@ export const FriendsMenu = ({ myName }) => {
         <button
           onClick={() => {
             setFrBlock("request");
-            // checkFriendRequest();
           }}
         >
           Friend Request{" "}
@@ -358,7 +357,11 @@ export const FriendsMenu = ({ myName }) => {
       </div>
       <div>
         {frBlock === "list" && (
-          <ListFr friendList={friendList} setFriendList={setFriendList} />
+          <ListFr
+            friendList={friendList}
+            setFriendList={setFriendList}
+            onlineStatus={onlineStatus}
+          />
         )}
         {frBlock === "find" && <FindFr />}
         {frBlock === "request" && <RequestFr />}
