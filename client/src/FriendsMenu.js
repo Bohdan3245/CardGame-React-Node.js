@@ -1,7 +1,8 @@
-import socket from "./socket";
+import { getSocket } from "./socket";
 import { useState, useEffect } from "react";
 
 export const FriendsMenu = ({ myName }) => {
+  const socket = getSocket();
   const token = sessionStorage.getItem("token");
 
   const [frBlock, setFrBlock] = useState("");
@@ -106,7 +107,7 @@ export const FriendsMenu = ({ myName }) => {
                     (friend) => friend.friendName === name
                   )
                     ? "green"
-                    : "gray",
+                    : "black",
                 }}
               >
                 {index + 1}. {name}{" "}

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import socket from "./socket";
+//import socket from "./socket";
+import { connectSocket, getSocket } from "./socket";
 export const Registration = ({ onLoginSuccess, setOwnerName }) => {
   const [activeModule, setActiveModule] = useState("registration");
 
@@ -26,7 +27,7 @@ export const Registration = ({ onLoginSuccess, setOwnerName }) => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ username, password, socketId: socket.id }),
+            body: JSON.stringify({ username, password }),
           }
         );
 
@@ -35,10 +36,14 @@ export const Registration = ({ onLoginSuccess, setOwnerName }) => {
         if (res.ok) {
           setOwnerName(username); // передається на головну сторінку ім'я зареєстрованого\залогованого користувача
           onLoginSuccess(); // при успішному вході\реєстрації відкриється головна сторінка
-          socket.emit("socketLogin", { name: username, socketID: socket.id });
 
           //збереження токена в session storage
           sessionStorage.setItem("token", data.token);
+          connectSocket(data.token); //перевірка токена і підключеня до websocket
+          const socket = getSocket();
+          socket.on("connect", () => {
+            socket.emit("socketLogin", { name: username, socketID: socket.id });
+          });
         } else {
           setResponse(data.error);
         }
@@ -94,7 +99,7 @@ export const Registration = ({ onLoginSuccess, setOwnerName }) => {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password, socketId: socket.id }),
+            body: JSON.stringify({ username, password }),
           }
         );
 
@@ -104,10 +109,14 @@ export const Registration = ({ onLoginSuccess, setOwnerName }) => {
         if (res.ok) {
           setOwnerName(username); // передається на головну сторінку ім'я зареєстрованого\залогованого користувача
           onLoginSuccess(); // при успішному вході\реєстрації відкриється головна сторінка
-          socket.emit("socketLogin", { name: username, socketID: socket.id });
 
           //збереження токена в session storage
           sessionStorage.setItem("token", data.token);
+          connectSocket(data.token); //перевірка токена і підключеня до websocket
+          const socket = getSocket();
+          socket.on("connect", () => {
+            socket.emit("socketLogin", { name: username, socketID: socket.id });
+          });
         } else {
           setResponse(data.error);
         }

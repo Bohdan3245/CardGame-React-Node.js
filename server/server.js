@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const connectDB = require("./config/db");
 const app = express();
 const port = process.env.PORT;
@@ -23,6 +24,17 @@ connectDB(); // підключення DB
 app.use(express.json()); //дозволяє приймати запити формату json
 app.use(express.text()); //дозволяє приймати запити формату text
 app.use(cors()); // дозволяє приймати запити з React
+
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    socket.user = user;
+    next();
+  } catch (err) {
+    return next(new Error("Authentication error"));
+  }
+});
 
 //імпорт маршрутів
 const authRouters = require("./routers/auth");

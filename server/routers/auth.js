@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt"); // імпорт бібліотеки для х
 const { createToken } = require("../utils/createToken");
 
 router.post("/register", async (req, res) => {
-  const { username, password, socketId } = req.body;
+  const { username, password } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: "І'мя та пароль обов'язвкові" });
@@ -22,7 +22,6 @@ router.post("/register", async (req, res) => {
     const newUser = new User({
       username,
       password: hashedPass,
-      socketID: socketId,
     });
 
     await newUser.save();
@@ -36,7 +35,7 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const { username, password, socketId } = req.body;
+  const { username, password } = req.body;
   try {
     const user = await User.findOne({ username });
 
@@ -54,14 +53,8 @@ router.post("/login", async (req, res) => {
     //console.log("токен який створивася:", token);
 
     res.status(200).json({ message: "Вхід успішний", token });
-    await User.updateOne(
-      { username: username },
-      { $set: { socketID: socketId } }
-    );
 
-    console.log(
-      `Користувач "\x1b[36m${username}\x1b[0m" увійшов в акаунт. socket.id: ${socketId}`
-    );
+    console.log(`Користувач "\x1b[36m${username}\x1b[0m" увійшов в акаунт.`);
   } catch (err) {
     console.error("Помилка логіну", err.message);
     res.status(500).json({ error: "Серверна помилка" });
