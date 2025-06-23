@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcrypt"); // імпорт бібліотеки для хешування паролів
+const { createToken } = require("../utils/createToken");
 
 router.post("/register", async (req, res) => {
   const { username, password, socketId } = req.body;
@@ -25,7 +26,9 @@ router.post("/register", async (req, res) => {
     });
 
     await newUser.save();
-    res.status(200).json({ message: "Користувача успішно створено" });
+    //створення токена
+    const token = createToken(username);
+    res.status(200).json({ message: "Користувача успішно створено", token });
     console.log(
       `Користувач "\x1b[36m${username}\x1b[0m" успішно зареєструвався.`
     );
@@ -47,7 +50,10 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ error: "Невірний пароль" });
     }
-    res.status(200).json({ message: "Вхід успішний" });
+    const token = createToken(username);
+    //console.log("токен який створивася:", token);
+
+    res.status(200).json({ message: "Вхід успішний", token });
     await User.updateOne(
       { username: username },
       { $set: { socketID: socketId } }

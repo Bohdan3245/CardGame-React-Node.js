@@ -90,21 +90,6 @@ async function friendRequest(accOwner, friendName) {
   }
 }
 
-async function checkFriendRequest(username) {
-  const existingUser = await User.findOne({ username });
-  console.log(
-    `${existingUser.friendRequest.length} requests are waiting for the \x1b[36m${username}\x1b[0m.`
-  );
-  if (existingUser.friendRequest.length > 0) {
-    return {
-      status: 200,
-      body: { friendRequest: existingUser.friendRequest },
-    };
-  } else {
-    return { status: 400, body: { message: "No friend request" } };
-  }
-}
-
 async function acceptDeclinRequest(accOwner, friend, answer) {
   if (answer) {
     await User.updateOne(
@@ -211,7 +196,6 @@ async function removeFriend(friend, accOwner) {
 module.exports = {
   findFriend,
   friendRequest,
-  checkFriendRequest,
   acceptDeclinRequest,
   getFriendList,
   removeFriend,

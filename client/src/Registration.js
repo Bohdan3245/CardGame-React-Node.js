@@ -36,6 +36,9 @@ export const Registration = ({ onLoginSuccess, setOwnerName }) => {
           setOwnerName(username); // передається на головну сторінку ім'я зареєстрованого\залогованого користувача
           onLoginSuccess(); // при успішному вході\реєстрації відкриється головна сторінка
           socket.emit("socketLogin", { name: username, socketID: socket.id });
+
+          //збереження токена в session storage
+          sessionStorage.setItem("token", data.token);
         } else {
           setResponse(data.error);
         }
@@ -102,6 +105,9 @@ export const Registration = ({ onLoginSuccess, setOwnerName }) => {
           setOwnerName(username); // передається на головну сторінку ім'я зареєстрованого\залогованого користувача
           onLoginSuccess(); // при успішному вході\реєстрації відкриється головна сторінка
           socket.emit("socketLogin", { name: username, socketID: socket.id });
+
+          //збереження токена в session storage
+          sessionStorage.setItem("token", data.token);
         } else {
           setResponse(data.error);
         }

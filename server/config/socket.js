@@ -39,6 +39,7 @@ module.exports = (io) => {
   //У io.on("connection", ...) — реєструєш всі події юзера через сокет.
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
+    // console.log(socket.handshake.headers);
 
     socket.on("disconnect", async () => {
       ////////////// deleting Map() (Online Friends List) //////////////

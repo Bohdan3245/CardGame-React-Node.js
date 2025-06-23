@@ -8,8 +8,9 @@ const {
   getFriendList,
   removeFriend,
 } = require("../controllers/friendController");
+const { verifyToken } = require("../utils/verifyToken");
 
-router.post("/findFriend", async (req, res) => {
+router.post("/findFriend", verifyToken, async (req, res) => {
   const { username, myName } = req.body;
   //console.log("отримано ім'я для пошуку: ", username);
 
@@ -22,7 +23,7 @@ router.post("/findFriend", async (req, res) => {
   }
 });
 
-router.post("/friendRequest", async (req, res) => {
+router.post("/friendRequest", verifyToken, async (req, res) => {
   const { fromWho, toWho } = req.body;
 
   try {
@@ -34,26 +35,26 @@ router.post("/friendRequest", async (req, res) => {
   }
 });
 
-router.post("/checkFriendRequest", async (req, res) => {
-  const { username } = req.body;
-  try {
-    const result = await checkFriendRequest(username);
-    return res.status(result.status).json(result.body);
-  } catch (err) {
-    console.error("Error checking for friend requests:", err.message);
-    return res.status(500).json({ message: "Server error" });
-  }
+// router.post("/checkFriendRequest", async (req, res) => {
+//   const { username } = req.body;
+//   try {
+//     const result = await checkFriendRequest(username);
+//     return res.status(result.status).json(result.body);
+//   } catch (err) {
+//     console.error("Error checking for friend requests:", err.message);
+//     return res.status(500).json({ message: "Server error" });
+//   }
 
-  // const existingUser = await User.findOne({ username });
-  // console.log(existingUser.friendRequest.length);
-  // if (existingUser.friendRequest.length > 0) {
-  //   return res.status(200).json({ friendRequest: existingUser.friendRequest });
-  // } else {
-  //   res.status(400);
-  // }
-});
+//   // const existingUser = await User.findOne({ username });
+//   // console.log(existingUser.friendRequest.length);
+//   // if (existingUser.friendRequest.length > 0) {
+//   //   return res.status(200).json({ friendRequest: existingUser.friendRequest });
+//   // } else {
+//   //   res.status(400);
+//   // }
+// });
 
-router.post("/acceptDeclinReq", async (req, res) => {
+router.post("/acceptDeclinReq", verifyToken, async (req, res) => {
   const { accOwner, friend, answer } = req.body;
   try {
     const result = await acceptDeclinRequest(accOwner, friend, answer);
@@ -64,9 +65,9 @@ router.post("/acceptDeclinReq", async (req, res) => {
   }
 });
 
-router.get("/:username", async (req, res) => {
-  const temp = req.params.username;
-  const accOwner = { username: temp };
+router.get("/:username", verifyToken, async (req, res) => {
+  //console.log(req.headers.authorization);
+  const accOwner = { username: req.params.username };
   try {
     const result = await getFriendList(accOwner);
     res.status(result.status).json(result.body);
@@ -76,7 +77,7 @@ router.get("/:username", async (req, res) => {
   }
 });
 
-router.post("/deleteFriend", async (req, res) => {
+router.post("/deleteFriend", verifyToken, async (req, res) => {
   const { name, myName } = req.body;
 
   try {

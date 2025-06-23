@@ -2,6 +2,8 @@ import socket from "./socket";
 import { useState, useEffect } from "react";
 
 export const FriendsMenu = ({ myName }) => {
+  const token = sessionStorage.getItem("token");
+
   const [frBlock, setFrBlock] = useState("");
   const [frRequetList, setFrRequestList] = useState({ friendRequest: [] });
 
@@ -36,7 +38,14 @@ export const FriendsMenu = ({ myName }) => {
   const getFriendList = async () => {
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_SERVER_URI}/api/friends/${myName}`
+        `${process.env.REACT_APP_SERVER_URI}/api/friends/${myName}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
       if (!res.ok) {
         console.log("шось пішло не так");
@@ -59,7 +68,10 @@ export const FriendsMenu = ({ myName }) => {
           `${process.env.REACT_APP_SERVER_URI}/api/friends/deleteFriend`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
             body: JSON.stringify({ name, myName }),
           }
         );
@@ -152,7 +164,10 @@ export const FriendsMenu = ({ myName }) => {
           `${process.env.REACT_APP_SERVER_URI}/api/friends/findFriend`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
             body: JSON.stringify({ username, myName }),
           }
         );
@@ -179,7 +194,10 @@ export const FriendsMenu = ({ myName }) => {
             `${process.env.REACT_APP_SERVER_URI}/api/friends/friendRequest`,
             {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
               body: JSON.stringify({ fromWho: myName, toWho: username }), // я тут зупинився
             }
           );
@@ -259,7 +277,10 @@ export const FriendsMenu = ({ myName }) => {
           `${process.env.REACT_APP_SERVER_URI}/api/friends/acceptDeclinReq`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
             body: JSON.stringify({
               accOwner: myName,
               friend: frName,
