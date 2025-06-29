@@ -35,25 +35,6 @@ router.post("/friendRequest", verifyToken, async (req, res) => {
   }
 });
 
-// router.post("/checkFriendRequest", async (req, res) => {
-//   const { username } = req.body;
-//   try {
-//     const result = await checkFriendRequest(username);
-//     return res.status(result.status).json(result.body);
-//   } catch (err) {
-//     console.error("Error checking for friend requests:", err.message);
-//     return res.status(500).json({ message: "Server error" });
-//   }
-
-//   // const existingUser = await User.findOne({ username });
-//   // console.log(existingUser.friendRequest.length);
-//   // if (existingUser.friendRequest.length > 0) {
-//   //   return res.status(200).json({ friendRequest: existingUser.friendRequest });
-//   // } else {
-//   //   res.status(400);
-//   // }
-// });
-
 router.post("/acceptDeclinReq", verifyToken, async (req, res) => {
   const { accOwner, friend, answer } = req.body;
   try {

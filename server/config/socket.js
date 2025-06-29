@@ -1,4 +1,7 @@
 const User = require("../models/user");
+const lobby = require("../sockets/socketLobby");
+const { getRoomsList } = require("../sockets/socketLobby");
+const { removeUserFromRoom } = require("../utils/removeUserFromRoom");
 let ioInstance;
 
 //Map() де ключ це ім'я, а socketID значення
@@ -11,13 +14,13 @@ async function sendMyStatusToFriends(io, myName, mySocketID, status) {
     const myData = await User.findOne({ username: myName });
     const friendList = myData.friendList;
     let arr = [];
-    if (friendList !== null)
+    if (friendList !== null) {
       for (const name of friendList) {
         if (onlineUserByName.get(name)) {
           arr.push({
             friendName: name,
             socketID: onlineUserByName.get(name),
-            onlineStatus: status,
+            onlineStatus: true,
           });
           io.to(onlineUserByName.get(name)).emit("onlineStatusOfFriend", {
             friendName: myName,
@@ -26,8 +29,13 @@ async function sendMyStatusToFriends(io, myName, mySocketID, status) {
           });
         }
       }
-    //відправляє список друзів онлайн на мій акк, коли я авторизуюсь
-    io.to(mySocketID).emit("myOnlineFriendList", arr);
+      //відправляє список друзів онлайн на мій акк, коли я авторизуюсь
+      // console.log(
+      //   `Список онлайн друзів сформований для користувача ${myName}:`
+      // );
+      // console.log(arr);
+      io.to(mySocketID).emit("myOnlineFriendList", arr);
+    }
   } catch (err) {
     console.error("Помилка при надсиланні статусу друзям:", err.message);
   }
@@ -57,6 +65,9 @@ module.exports = (io) => {
         onlineUserByName.delete(nameKey);
         onlineUserBySocketID.delete(socket.id);
       }
+
+      //видалення юзера з кімнати при дисконексті(якшо він є в цій кімнаті)
+      removeUserFromRoom(socket.roomID, socket.id, io);
 
       // console.log("Мапа після видалення де ключ це ім'я: ", onlineUserByName);
       // console.log(
@@ -107,6 +118,8 @@ module.exports = (io) => {
         socket.emit("friendRequestList", { friendRequest: [] });
       }
     });
+
+    lobby(socket, io);
   });
 
   //зміна бд в режимі реального часу

@@ -2,7 +2,7 @@ import { useState } from "react";
 //import socket from "./socket";
 import { connectSocket, getSocket } from "./socket";
 export const Registration = ({ onLoginSuccess, setOwnerName }) => {
-  const [activeModule, setActiveModule] = useState("registration");
+  const [activeModule, setActiveModule] = useState("login");
 
   function Register({ onLoginSuccess, setOwnerName }) {
     const [username, setUserName] = useState("");

@@ -1,7 +1,7 @@
 import { getSocket } from "./socket";
 import { useState, useEffect } from "react";
 
-export const FriendsMenu = ({ myName }) => {
+export const FriendsMenu = ({ myName, onlineStatus }) => {
   const socket = getSocket();
   const token = sessionStorage.getItem("token");
 
@@ -10,31 +10,6 @@ export const FriendsMenu = ({ myName }) => {
 
   //Список друзів
   const [friendList, setFriendList] = useState([]);
-  const [onlineStatus, setOnlineStatus] = useState([]);
-
-  //set online status
-  useEffect(() => {
-    socket.on("onlineStatusOfFriend", (data) => {
-      if (data.onlineStatus) {
-        setOnlineStatus((prev) => [
-          ...prev,
-          { friendName: data.friendName, socketID: data.socketID },
-        ]);
-      } else {
-        setOnlineStatus((prev) => {
-          return prev.filter(
-            (username) => username.friendName !== data.friendName
-          );
-        });
-      }
-
-      console.log("Я зайшов в онлайн", onlineStatus);
-    });
-
-    socket.on("myOnlineFriendList", (data) => {
-      setOnlineStatus(data);
-    });
-  }, []);
 
   const getFriendList = async () => {
     try {

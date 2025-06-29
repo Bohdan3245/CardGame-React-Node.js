@@ -8,6 +8,7 @@ function createToken(username) {
       expiresIn: "6h",
     }
   );
+  // console.log(token);
   return token;
 }
 
