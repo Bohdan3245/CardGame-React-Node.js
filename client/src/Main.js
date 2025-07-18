@@ -3,6 +3,7 @@ import { Header } from "./Header";
 import { Lobby } from "./Lobby";
 import { Profile } from "./Profile";
 import { FriendsMenu } from "./FriendsMenu";
+import { GamePlay } from "./GamePlay";
 import { useState, useEffect } from "react";
 import { getSocket } from "./socket";
 
@@ -58,6 +59,20 @@ export const Main = ({ ownerName }) => {
     }
   }, [lobbyMembers]);
 
+  //Зміна модуля на gameplay
+
+  useEffect(() => {
+    const switchHandle = (data) => {
+      console.log(data);
+      setSwitchModule(data);
+    };
+    socket.on("switchToStartModule", switchHandle);
+
+    return () => {
+      socket.off("switchToStartModule", switchHandle);
+    };
+  });
+
   //set online status
   useEffect(() => {
     socket.on("onlineStatusOfFriend", (data) => {
@@ -83,9 +98,8 @@ export const Main = ({ ownerName }) => {
   return (
     <div className="main">
       <div className="mainHeader">
-        <Header setSwitchModule={setSwitchModule} />
+        <Header myName={ownerName} setSwitchModule={setSwitchModule} />
       </div>
-      <p>Це акаунт користувача {ownerName}</p>
 
       <div className="mainModule">
         {switchModule === "friends" && (
@@ -103,9 +117,15 @@ export const Main = ({ ownerName }) => {
             allReady={allReady}
             setLobbyAdmin={setLobbyAdmin}
             lobbyAdmin={lobbyAdmin}
+            setSwitchModule={setSwitchModule}
           />
         )}
         {switchModule === "profile" && <Profile />}
+      </div>
+      <div>
+        {switchModule === "gameplay" && (
+          <GamePlay lobbyID={lobbyID} myName={ownerName} />
+        )}
       </div>
     </div>
   );

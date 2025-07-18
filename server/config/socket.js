@@ -1,5 +1,6 @@
 const User = require("../models/user");
 const lobby = require("../sockets/socketLobby");
+const gameLogic = require("../sockets/gameLogic");
 const { getRoomsList } = require("../sockets/socketLobby");
 const { removeUserFromRoom } = require("../utils/removeUserFromRoom");
 let ioInstance;
@@ -120,6 +121,7 @@ module.exports = (io) => {
     });
 
     lobby(socket, io);
+    gameLogic(socket, io);
   });
 
   //зміна бд в режимі реального часу

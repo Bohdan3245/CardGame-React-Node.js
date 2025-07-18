@@ -1,5 +1,5 @@
 import "./css/Header.css";
-export const Header = ({ setSwitchModule }) => {
+export const Header = ({ myName, setSwitchModule }) => {
   return (
     <div className="header">
       <div className="header_menu">
@@ -21,6 +21,7 @@ export const Header = ({ setSwitchModule }) => {
         >
           Friends
         </button>
+        <p>Це акаунт користувача {myName}</p>
       </div>
     </div>
   );

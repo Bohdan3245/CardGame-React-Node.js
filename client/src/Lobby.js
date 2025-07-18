@@ -12,6 +12,7 @@ export const Lobby = ({
   allReady,
   lobbyAdmin,
   setLobbyAdmin,
+  setSwitchModule,
 }) => {
   const socket = getSocket();
   const [createJoinHandler, setCreateJoinHandler] = useState("");
@@ -112,7 +113,17 @@ export const Lobby = ({
               </div>
               {allReady && lobbyAdmin && (
                 <div>
-                  <button>Start</button>
+                  <button
+                    onClick={() => {
+                      socket.emit("startGame", {
+                        lobbyID: lobbyID,
+                        command: "gameplay",
+                      });
+                      setSwitchModule("gameplay");
+                    }}
+                  >
+                    Start
+                  </button>
                 </div>
               )}
             </div>
