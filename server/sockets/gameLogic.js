@@ -76,25 +76,6 @@ module.exports = (socket, io) => {
       board: lobby.board.slice(-4),
       countPlayersCards: lobby.countPlayersCard,
     });
-
-    ////
-    // const LID = data.lobbyID;
-    // const updateBoard = rooms[data.lobbyID].board.map((card) => ({
-    //   ...card,
-    //   suit: data.suit,
-    // }));
-    // rooms[LID].board = [...updateBoard];
-
-    // rooms[LID].whoIsMove = nextPlayerMove(
-    //   rooms[LID].randomPosition,
-    //   rooms[LID].whoIsMove
-    // );
-
-    // io.to(LID).emit("updateGameState", {
-    //   whoIsMove: rooms[LID].whoIsMove,
-    //   board: rooms[LID].board.slice(-4),
-    //   countPlayersCards: rooms[LID].countPlayersCards,
-    // });
   });
 
   socket.on("getOneCard", (data) => {
@@ -125,26 +106,6 @@ module.exports = (socket, io) => {
       board: lobby.board.slice(-4),
       countPlayersCards: lobby.countPlayersCard,
     });
-    //
-    // let index = rooms[data.lobbyID].randomPosition.indexOf(
-    //   rooms[data.lobbyID].whoIsMove
-    // );
-    // if (index === rooms[data.lobbyID].randomPosition.length - 1) {
-    //   rooms[data.lobbyID].whoIsMove = rooms[data.lobbyID].randomPosition[0];
-    // } else {
-    //   rooms[data.lobbyID].whoIsMove =
-    //     rooms[data.lobbyID].randomPosition[index + 1];
-    // }
-
-    // rooms[data.lobbyID].countPlayersCards = checkCountOfPlayerCards(
-    //   rooms[data.lobbyID].lobbyMembers
-    // );
-
-    // io.to(data.lobbyID).emit("updateGameState", {
-    //   whoIsMove: rooms[data.lobbyID].whoIsMove,
-    //   board: rooms[data.lobbyID].board.slice(-4),
-    //   countPlayersCards: rooms[data.lobbyID].countPlayersCards,
-    // });
   });
 
   socket.on("readyToStartNewRound", (data) => {
