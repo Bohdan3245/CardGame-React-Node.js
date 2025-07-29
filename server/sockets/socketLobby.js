@@ -1,88 +1,68 @@
-const { getRoomsList } = require("../sockets/rooms");
-const { removeUserFromRoom } = require("../utils/removeUserFromRoom");
-const { generateLobbyID } = require("../utils/generateLobbyID.js");
-const rooms = getRoomsList();
+const { createUnicueLobbyId } = require("../utils/createUniqueLobbyID.js");
+const lobbyStorage = require("../lobbyStorage/lobbyStorage.js");
+const Lobby = require("../classes/Lobby.js");
 
 module.exports = (socket, io) => {
   socket.on("createLobby", (data) => {
-    const roomID = generateLobbyID();
-    socket.join(roomID);
-    socket.roomID = roomID;
-
-    if (!rooms[roomID]) {
-      rooms[roomID] = {};
-    }
-
-    rooms[roomID].lobbyMembers = [];
-    rooms[roomID].countOfReady = 0;
-    rooms[roomID].lobbyMembers.push({
-      name: data.name,
-      socketID: socket.id,
-      lobbyID: roomID,
-      readyStatus: false,
-      points: 0,
-      howManyPointsAdd: 0,
-      countOfGameLose: 0,
-    });
-    io.to(roomID).emit("lobbyMembers", rooms[roomID].lobbyMembers);
+    const lobbyID = createUnicueLobbyId();
+    socket.join(lobbyID);
+    //create lobby
+    const newLobby = new Lobby(lobbyID);
+    //add player to lobby
+    newLobby.addPlayer(data.name, socket.id, lobbyID);
+    //set lobby admin
+    newLobby.lobbyAdmin = data.name;
+    //save lobby in lobbyStorage
+    lobbyStorage.set(newLobby.lobbyID, newLobby);
+    //send list of lobby members
+    io.to(lobbyID).emit("lobbyMembers", newLobby.members);
+    socket.lobbyID = lobbyID;
+    //add lobbyID in socket object for get ID when socket disconnected
+    console.log(typeof lobbyID);
+    console.log(socket.userName);
   });
 
   socket.on("joinLobby", (data) => {
-    console.log("це те шо join", data);
-
-    if (data.roomID in rooms) {
-      if (rooms[data.roomID].lobbyMembers.length >= 4) {
-        io.to(data.socketID).emit("response", {
-          message: "This lobby is full.",
-        });
-      } else {
-        socket.join(data.roomID);
-        socket.roomID = data.roomID;
-
-        rooms[data.roomID].lobbyMembers.push({
-          name: data.name,
-          socketID: socket.id,
-          lobbyID: data.roomID,
-          readyStatus: false,
-          points: 0,
-          howManyPointsAdd: 0,
-          countOfGameLose: 0,
-        });
-
-        io.to(data.socketID).emit("response", {
-          message: "ok",
-        });
-
-        io.to(data.roomID).emit(
-          "lobbyMembers",
-          rooms[data.roomID].lobbyMembers
-        );
-      }
-    } else {
-      io.to(data.socketID).emit("response", {
+    if (!lobbyStorage.has(data.lobbyID)) {
+      io.to(socket.id).emit("response", {
         message: "This lobby doesn't exist.",
       });
+      return;
     }
+
+    const lobby = lobbyStorage.get(data.lobbyID);
+    if (lobby.members.length >= 4) {
+      io.to(socket.id).emit("response", {
+        message: "This lobby is full.",
+      });
+    }
+
+    socket.join(data.lobbyID);
+    lobby.addPlayer(data.name, socket.id, data.lobbyID);
+
+    io.to(socket.id).emit("response", { message: "ok" });
+    io.to(data.lobbyID).emit("lobbyMembers", lobby.members);
+    //add lobbyID in socket object for get ID when socket disconnected
+    socket.lobbyID = data.lobbyID;
   });
 
-  socket.on("leaveLobby", (roomID) => {
-    removeUserFromRoom(roomID, socket.id, io);
-    socket.leave(roomID);
-    //console.log("юзер лівнув з кімнати", socket.id);
-    //console.log(rooms);
+  socket.on("leaveLobby", (data) => {
+    const lobby = lobbyStorage.get(data.lobbyID);
+    lobby.removePlayer(data.name);
+
+    io.to(data.lobbyID).emit("setLobbyAdmin", lobby.lobbyAdmin);
+    socket.to(data.lobbyID).emit("lobbyMembers", lobby.members);
+    socket.leave(data.lobbyID);
+    //remove lobbyID in socket
+    socket.lobbyID = "";
   });
 
   socket.on("readyToStart", (data) => {
-    const userIndex = rooms[data.lobbyID].lobbyMembers.findIndex(
-      (user) => user.socketID == socket.id
-    );
+    const lobby = lobbyStorage.get(data.lobbyID);
+    const playerIndex = lobby.getPlayerIndex(data.name);
+    lobby.members[playerIndex].readyStatus = data.readyStatus;
 
-    rooms[data.lobbyID].lobbyMembers[userIndex].readyStatus = data.readyStatus;
-    //console.log(rooms[data.lobbyID]);
-
-    socket
-      .to(data.lobbyID)
-      .emit("lobbyMembers", rooms[data.lobbyID].lobbyMembers);
+    socket.to(data.lobbyID).emit("lobbyMembers", lobby.members);
   });
 
   socket.on("startGame", (data) => {

@@ -1,8 +1,9 @@
 const User = require("../models/user");
 const lobby = require("../sockets/socketLobby");
 const gameLogic = require("../sockets/gameLogic");
-const { getRoomsList } = require("../sockets/socketLobby");
-const { removeUserFromRoom } = require("../utils/removeUserFromRoom");
+const lobbyStorage = require("../lobbyStorage/lobbyStorage.js");
+const { sendGameState } = require("../utils/sendGameState.js");
+
 let ioInstance;
 
 //Map() де ключ це ім'я, а socketID значення
@@ -48,6 +49,7 @@ module.exports = (io) => {
   //У io.on("connection", ...) — реєструєш всі події юзера через сокет.
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
+
     // console.log(socket.handshake.headers);
 
     socket.on("disconnect", async () => {
@@ -67,8 +69,20 @@ module.exports = (io) => {
         onlineUserBySocketID.delete(socket.id);
       }
 
-      //видалення юзера з кімнати при дисконексті(якшо він є в цій кімнаті)
-      removeUserFromRoom(socket.roomID, socket.id, io);
+      //видалення юзера з кімнати при дисконексті(якшо він є в лоббі)
+
+      //if user has joined a lobby, he is removes from this
+      if (socket.lobbyID) {
+        const lobby = lobbyStorage.get(socket.lobbyID);
+        lobby.gameStarted
+          ? lobby.engine.leaveGame(socket.userName) || sendGameState(io, lobby)
+          : lobby.removePlayer(socket.userName);
+        io.to(socket.lobbyID).emit("lobbyMembers", lobby.members);
+        io.to(socket.lobbyID).emit("setLobbyAdmin", lobby.lobbyAdmin);
+        console.log("віе був у лоббі");
+      } else {
+        console.log("його не було в ніякому лоббі");
+      }
 
       // console.log("Мапа після видалення де ключ це ім'я: ", onlineUserByName);
       // console.log(
@@ -86,6 +100,7 @@ module.exports = (io) => {
     //вся логіка
     ////////////// add Map() (Online Friends List) //////////////
     socket.on("socketLogin", (data) => {
+      socket.userName = data.name;
       onlineUserByName.set(data.name, data.socketID);
       onlineUserBySocketID.set(data.socketID, data.name);
 

@@ -19,7 +19,7 @@ export const Main = ({ ownerName }) => {
   const [isLobbyExist, setIsLobbyExist] = useState(false);
   const [lobbyID, setLobbyID] = useState("");
   const [allReady, setAllReady] = useState(false);
-  const [lobbyAdmin, setLobbyAdmin] = useState(false);
+  const [lobbyAdmin, setLobbyAdmin] = useState("");
 
   //Список учасників лоббі
   useEffect(() => {
@@ -124,7 +124,12 @@ export const Main = ({ ownerName }) => {
       </div>
       <div>
         {switchModule === "gameplay" && (
-          <GamePlay lobbyID={lobbyID} myName={ownerName} />
+          <GamePlay
+            lobbyID={lobbyID}
+            myName={ownerName}
+            setSwitchModule={setSwitchModule}
+            setIsLobbyExist={setIsLobbyExist}
+          />
         )}
       </div>
     </div>

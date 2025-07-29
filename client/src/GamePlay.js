@@ -4,7 +4,12 @@ import { ResultOfRound } from "./ResultOfRound";
 import { Board } from "./Board";
 import { getSocket } from "./socket";
 
-export const GamePlay = ({ lobbyID, myName }) => {
+export const GamePlay = ({
+  lobbyID,
+  myName,
+  setSwitchModule,
+  setIsLobbyExist,
+}) => {
   const [playersData, setPlayersData] = useState([]);
   const [myCards, setMyCards] = useState([]);
   const [whoIsMove, setWhoIsMove] = useState("");
@@ -31,7 +36,7 @@ export const GamePlay = ({ lobbyID, myName }) => {
   const socket = getSocket();
   useEffect(() => {
     console.log(lobbyID);
-    socket.emit("game");
+    socket.emit("game", lobbyID);
   }, []);
 
   useEffect(() => {
@@ -95,7 +100,7 @@ export const GamePlay = ({ lobbyID, myName }) => {
         })
       ) {
         console.log("лошара, ти пропускаєш");
-        socket.emit("skipMove", { lobbyID: lobbyID });
+        socket.emit("skipMove", { lobbyID: lobbyID, name: myName });
         setCardWasPickedFromDeck(false);
       }
     });
@@ -195,8 +200,50 @@ export const GamePlay = ({ lobbyID, myName }) => {
     return suit === "♦" || suit === "♥" ? "red" : "black";
   }
 
+  const [showConfirmLeaveGame, setShowConfirmLeaveGame] = useState(false);
+  const [showLeaveButton, setShowLeaveButton] = useState(true);
+  function leaveGame() {
+    socket.emit("leaveGame", { lobbyID: lobbyID, name: myName });
+    setSwitchModule("play");
+    setIsLobbyExist(false);
+  }
+
   return (
     <div className="mainField">
+      <div className="leaveButton">
+        {showLeaveButton && (
+          <button
+            onClick={() => {
+              setShowConfirmLeaveGame(true);
+              setShowLeaveButton(false);
+            }}
+          >
+            Leave
+          </button>
+        )}
+        {showConfirmLeaveGame && (
+          <div
+            style={{ width: "100px", height: "50px", backgroundColor: "gray" }}
+          >
+            <h3> Are you shure?</h3>
+            <button
+              onClick={() => {
+                leaveGame();
+              }}
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => {
+                setShowConfirmLeaveGame(false);
+                setShowLeaveButton(true);
+              }}
+            >
+              No
+            </button>
+          </div>
+        )}
+      </div>
       <div className="player1">
         {/* блок поверх карт, шоб не було змоги ходити якшо не твій хід */}
         <div
@@ -235,7 +282,7 @@ export const GamePlay = ({ lobbyID, myName }) => {
                     if (boardCards.at(-1).value === "6") {
                       return;
                     }
-                    socket.emit("skipMove", { lobbyID: lobbyID });
+                    socket.emit("skipMove", { lobbyID: lobbyID, name: myName });
                     setCardWasPickedFromDeck(false);
                     setFirstMove("");
                   }}
@@ -525,6 +572,7 @@ export const GamePlay = ({ lobbyID, myName }) => {
             setDistribute8ToAll={setDistribute8ToAll}
             jackSuit={jackSuit}
             setJackSuit={setJackSuit}
+            lobbyID={lobbyID}
           />
         )}
       </div>

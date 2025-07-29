@@ -37,7 +37,11 @@ export const Lobby = ({
       const index = lobbyMembers.findIndex((user) => user.name === myName);
 
       if (!lobbyMembers[index].readyStatus) {
-        socket.emit("readyToStart", { lobbyID: lobbyID, readyStatus: true });
+        socket.emit("readyToStart", {
+          lobbyID: lobbyID,
+          readyStatus: true,
+          name: myName,
+        });
 
         setLobbyMembers((prevMembers) => {
           const newStatus = [...prevMembers];
@@ -47,7 +51,11 @@ export const Lobby = ({
 
         //console.log(lobbyMembers);
       } else {
-        socket.emit("readyToStart", { lobbyID: lobbyID, readyStatus: false });
+        socket.emit("readyToStart", {
+          lobbyID: lobbyID,
+          readyStatus: false,
+          name: myName,
+        });
 
         setLobbyMembers((prevMembers) => {
           const newStatus = [...prevMembers];
@@ -90,13 +98,16 @@ export const Lobby = ({
                 <button onClick={handleReadyClick}>Ready</button>
                 <button
                   onClick={() => {
-                    socket.emit("leaveLobby", lobbyID);
+                    socket.emit("leaveLobby", {
+                      lobbyID: lobbyID,
+                      name: myName,
+                    });
 
                     setLobbyMembers([]);
                     setIsVisible(true);
                     setLobbyIsVisible(false);
                     setIsLobbyExist(false);
-                    setLobbyAdmin(false);
+                    setLobbyAdmin("");
                   }}
                 >
                   Leave
@@ -111,7 +122,7 @@ export const Lobby = ({
                   allready status
                 </button> */}
               </div>
-              {allReady && lobbyAdmin && (
+              {allReady && lobbyAdmin === myName && (
                 <div>
                   <button
                     onClick={() => {
@@ -151,8 +162,7 @@ export const Lobby = ({
       const input = document.getElementById("roomID-input");
       const value = input.value;
       socket.emit("joinLobby", {
-        roomID: value,
-        socketID: socket.id,
+        lobbyID: value,
         name: myName,
       });
       setLobbyID(value);
@@ -190,7 +200,7 @@ export const Lobby = ({
                 setIsVisible(false);
                 setLobbyIsVisible(true);
                 setIsLobbyExist(true);
-                setLobbyAdmin(true);
+                setLobbyAdmin(myName);
               }}
             >
               Create Lobby

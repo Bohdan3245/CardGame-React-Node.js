@@ -16,6 +16,7 @@ export const Board = ({
   setDistribute8ToAll,
   jackSuit,
   setJackSuit,
+  lobbyID,
 }) => {
   function cardColor(suit) {
     return suit === "♦" || suit === "♥" ? "red" : "black";
@@ -56,6 +57,7 @@ export const Board = ({
                       console.log("✅ Можна класти карту");
 
                       socket.emit("playerMove", {
+                        lobbyID: lobbyID,
                         move: selectedCard,
                         whoMoved: myName,
                         conditionFor8: distribute8ToAll,
@@ -82,6 +84,7 @@ export const Board = ({
                     console.log("✅ Можна класти 7");
 
                     socket.emit("playerMove", {
+                      lobbyID: lobbyID,
                       move: selectedCard,
                       whoMoved: myName,
                       conditionFor8: distribute8ToAll,
@@ -102,6 +105,7 @@ export const Board = ({
                     setCardWasPickedFromDeck(false);
                   } else if (boardValue === "8" && selectedValue === "8") {
                     socket.emit("playerMove", {
+                      lobbyID: lobbyID,
                       move: selectedCard,
                       whoMoved: myName,
                       conditionFor8: distribute8ToAll,
@@ -123,6 +127,7 @@ export const Board = ({
                     setDistribute8ToAll(false);
                   } else if (boardValue === "A" && selectedValue === "A") {
                     socket.emit("playerMove", {
+                      lobbyID: lobbyID,
                       move: selectedCard,
                       whoMoved: myName,
                       conditionFor8: distribute8ToAll,
@@ -148,6 +153,7 @@ export const Board = ({
                     jackSuit !== ""
                   ) {
                     socket.emit("playerMove", {
+                      lobbyID: lobbyID,
                       move: selectedCard,
                       whoMoved: myName,
                       conditionFor8: distribute8ToAll,
@@ -170,6 +176,7 @@ export const Board = ({
                     return;
                   } else if (boardValue === selectedValue) {
                     socket.emit("playerMove", {
+                      lobbyID: lobbyID,
                       move: selectedCard,
                       whoMoved: myName,
                       conditionFor8: distribute8ToAll,
@@ -203,6 +210,7 @@ export const Board = ({
                 ) {
                   if (jackSuit !== "") {
                     socket.emit("playerMove", {
+                      lobbyID: lobbyID,
                       move: selectedCard,
                       whoMoved: myName,
                       conditionFor8: distribute8ToAll,
@@ -228,6 +236,7 @@ export const Board = ({
                 // boardCards.length != 1 тут для перевірки, якшо це початок раунда, і на дошці тіки одна карта, то вальта не можна буде скинути за звичайних умов
                 if (selectedValue === "J" && jackSuit !== "") {
                   socket.emit("playerMove", {
+                    lobbyID: lobbyID,
                     move: selectedCard,
                     whoMoved: myName,
                     conditionFor8: distribute8ToAll,
@@ -260,6 +269,7 @@ export const Board = ({
                   console.log("✅ Можна класти карту");
 
                   socket.emit("playerMove", {
+                    lobbyID: lobbyID,
                     move: selectedCard,
                     whoMoved: myName,
                     conditionFor8: distribute8ToAll,
@@ -351,10 +361,10 @@ export const Board = ({
             !checkMovePossibility
           ) {
             console.log("спрацював ця іфка для шестірки");
-            socket.emit("getOneCard", { name: myName });
+            socket.emit("getOneCard", { name: myName, lobbyID: lobbyID });
           } else {
             if (whoIsMove === myName && !cardWasPickedFromDeck) {
-              socket.emit("getOneCard", { name: myName });
+              socket.emit("getOneCard", { name: myName, lobbyID: lobbyID });
               setCardWasPickedFromDeck(true);
             }
           }
